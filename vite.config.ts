@@ -1,5 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "url";
 import { defineConfig } from "vite";
@@ -12,11 +13,11 @@ export default defineConfig({
       target: "react",
       autoCodeSplitting: true,
     }),
+    basicSsl(),
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "prompt",
-      injectRegister: false,
+      registerType: "autoUpdate",
 
       pwaAssets: {
         disabled: false,
