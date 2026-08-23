@@ -1,5 +1,6 @@
 import useCamera from "@/hooks/useCamera";
-import { useEffect, useRef, useState } from "react";
+import useOcr from "@/hooks/useOCR";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 
 const CameraView = () => {
@@ -13,50 +14,54 @@ const CameraView = () => {
     takePhoto,
   } = useCamera();
 
-  const [isCapturing, setIsCapturing] = useState(false);
+  const {
+    lastResult,
+    status,
+    ocrIsReady,
+    error: ocrError,
+    initializeOcrEngine,
+    runOcr,
+  } = useOcr();
 
-  const tempCanvas = useRef<HTMLCanvasElement | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
     startCamera();
-  }, [startCamera]);
-
-  console.log("isCapturing:", isCapturing);
-  console.log("isActive:", isActive);
-  console.log("error:", error);
+    initializeOcrEngine();
+  }, [startCamera, initializeOcrEngine]);
 
   const handleCapture = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
 
     try {
+      console.log("taking a picture!");
       const frame = await takePhoto();
       if (!frame) return;
-
-      if (tempCanvas.current) {
-        const ctx = tempCanvas.current.getContext("2d");
-        ctx?.putImageData(frame, 150, 150);
-      }
+      const blob = await new Promise<Blob>((res) =>
+        canvasRef.current!.toBlob(res!, "image/png")!,
+      );
+      const file = new File([blob], "image.png");
+      await runOcr({ imageFile: file });
     } finally {
+      console.log("FINALLY");
       setIsCapturing(false);
     }
   };
   return (
-    <div>
+    <div className="">
+      <div className="bg-secondary absolute left-1/2 mt-8 -translate-x-1/2 rounded-2xl">
+        <p className="text-borde text-center text-black">{error ?? status}</p>
+      </div>
+
       <video ref={videoRef} />
       <canvas ref={canvasRef} />
-      <div>
-        <Button
-          size="lg"
-          disabled={isCapturing && !isActive}
-          onClick={handleCapture}
-        >
-          CLICK ME
-        </Button>
-      </div>
-      <div>
-        <canvas ref={tempCanvas} />
-      </div>
+      <Button
+        size="lg"
+        disabled={isCapturing && !isActive && !ocrIsReady}
+        onClick={handleCapture}
+        className="absolute bottom-8 left-1/2 size-16 -translate-x-1/2 rounded-full border-6 border-gray-700 bg-white shadow-md shadow-black"
+      ></Button>
     </div>
   );
 };

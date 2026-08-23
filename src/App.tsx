@@ -1,9 +1,8 @@
-import "./App.css";
 import CameraView from "./components/CameraView";
 
 function App() {
   return (
-    <div>
+    <div className="bg-secondary fixed inset-0 w-full overflow-hidden">
       <CameraView />
     </div>
   );
